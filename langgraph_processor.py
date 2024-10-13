@@ -16,7 +16,7 @@ from pipecat.frames.frames import (
     TextFrame,
 )
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
-from langgraph.graph import StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
 try:
     from langchain_core.messages import AIMessageChunk
@@ -37,9 +37,9 @@ class ToolResultMessage(DataFrame):
 
 
 class LanggraphProcessor(FrameProcessor):
-    def __init__(self, graph: StateGraph):
+    def __init__(self, graph: CompiledStateGraph):
         super().__init__()
-        self._graph = graph
+        self._graph: CompiledStateGraph = graph
         self._participant_id: str | None = None
 
     def set_participant_id(self, participant_id: str):
@@ -77,6 +77,7 @@ class LanggraphProcessor(FrameProcessor):
             ):
                 match event["event"]:
                     case "on_chat_model_stream":
+                        logger.info(f"Received event: {event}")
                         # await self.push_frame(LLMResponseStartFrame())
                         await self.push_frame(
                             TextFrame(self.__get_token_value(event["data"]["chunk"]))
