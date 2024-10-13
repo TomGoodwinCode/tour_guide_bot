@@ -1,4 +1,13 @@
 .venv
 requirements.txt
 
+# pyc files 
+*.pyc
+
+# pycache
+__pycache__
+
 venv/
+
+# env variables
+.env
