@@ -1,0 +1,11 @@
+{
+  "python.analysis.extraPaths": [
+    "/Users/tom/repositories/tour-guide/backend/shared_library"
+  ],
+  "python.linting.pylintArgs": [
+    "--init-hook",
+    "import sys; sys.path.append('/Users/tom/repositories/tour-guide/backend/shared_library')"
+  ],
+  "python.linting.pylintArgs": ["--ignore", "site-packages"],
+  "python.linting.flake8Args": ["--exclude=site-packages"]
+}
