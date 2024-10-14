@@ -53,13 +53,13 @@ class DetailedFrameLogger(FrameProcessor):
         self.name = name
 
     async def process_frame(self, frame: Frame, direction: FrameDirection):
-        logger.debug(f"{self.name}: Received frame type {type(frame).__name__}")
-        if isinstance(frame, AudioRawFrame):
-            logger.debug(
-                f"{self.name}: Audio frame received, length: {len(frame.audio)}"
-            )
-        elif hasattr(frame, "text"):
-            logger.debug(f"{self.name}: Frame content: {frame.text}")
+        # logger.debug(f"{self.name}: Received frame type {type(frame).__name__}")
+        # if isinstance(frame, AudioRawFrame):
+        #     logger.debug(
+        #         f"{self.name}: Audio frame received, length: {len(frame.audio)}"
+        #     )
+        # elif hasattr(frame, "text"):
+        #     logger.debug(f"{self.name}: Frame content: {frame.text}")
         await self.push_frame(frame, direction)
 
 
@@ -86,7 +86,7 @@ async def main(
     transport = DailyTransport(
         room_url=room_url,
         token=bot_token,
-        bot_name="Tour Guide Bot",
+        bot_name="Tour Guide Bot 2",
         params=DailyParams(
             audio_out_enabled=True,
             transcription_enabled=True,
@@ -124,12 +124,6 @@ async def main(
     pipeline_task = PipelineTask(pipeline, PipelineParams(allow_interruptions=True))
     runner = PipelineRunner()
 
-    try:
-        await runner.run(pipeline_task)
-    except Exception as e:
-        logger.error(f"Error in main function: {str(e)}")
-        raise
-
     @transport.event_handler("on_first_participant_joined")
     async def on_first_participant_joined(transport, participant):
         transport.capture_participant_transcription(participant["id"])
@@ -141,6 +135,12 @@ async def main(
     async def on_participant_left(transport, participant, reason):
         lc.set_participant_id(None)
         # Implement graceful shutdown here
+
+    try:
+        await runner.run(pipeline_task)
+    except Exception as e:
+        logger.error(f"Error in main function: {str(e)}")
+        raise
 
 
 if __name__ == "__main__":
