@@ -31,7 +31,7 @@ from di.container_instance import bot_container
 from loguru import logger
 
 
-import graph
+from graph import graph
 from langgraph_processor import LanggraphProcessor
 from models.schemas import UserID
 
@@ -81,7 +81,7 @@ async def main(
     if not poi_data:
         raise ValueError(f"Item with item_id {item_id} not found")
 
-    # Use poi_data in your bot logic
+    graph.get_state
 
     transport = DailyTransport(
         room_url=room_url,

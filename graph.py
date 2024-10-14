@@ -20,6 +20,8 @@ from tools import TOOLS
 
 from utils import load_chat_model
 
+from langgraph.checkpoint.memory import MemorySaver
+
 
 # Define the function that calls the model
 async def call_model(
@@ -36,6 +38,7 @@ async def call_model(
 
     Returns:
         dict: A dictionary containing the model's response message.
+
     """
 
     configuration = Configuration.from_runnable_config(config)
@@ -45,7 +48,7 @@ async def call_model(
         [
             ("system", configuration.system_prompt),
             ("placeholder", "{messages}"),
-            ("human", "{input}"),
+            ("user", "{input}"),
         ]
     )
 
@@ -53,16 +56,21 @@ async def call_model(
     model = load_chat_model(configuration.model).bind_tools(TOOLS)
     # model = ChatOpenAI(model="gpt-4o",temperature=0)
     # Prepare the input for the model, including the current system time
+    # messages are all but last message
+    # input is last message
     message_value = await prompt.ainvoke(
         {
-            "messages": state.messages,
-            "wiki_title`": "London",
+            "messages": state.messages[:-1],
+            "input": state.messages[-1].content,
+            "title": "London",
+            "wiki_title": "London",
             "wiki_extract": "London is the capital city of England.",
             "wiki_description": "London is the capital city of England.",
         },
         config,
     )
 
+    logging.info(f"message_value: {message_value}")
     # Get the model's response
     response = cast(AIMessage, await model.ainvoke(message_value, config))
 
@@ -131,10 +139,14 @@ workflow.add_conditional_edges(
 # This creates a cycle: after using tools, we always return to the model
 workflow.add_edge("tools", "call_model")
 
+memory = MemorySaver()
+
 # Compile the workflow into an executable graph
 # You can customize this by adding interrupt points for state updates
 graph = workflow.compile(
     interrupt_before=[],  # Add node names here to update state before they're called
     interrupt_after=[],  # Add node names here to update state after they're called
+    debug=True,
+    checkpointer=memory,
 )
 graph.name = "Pipecat Bot"  # This customizes the name in LangSmith

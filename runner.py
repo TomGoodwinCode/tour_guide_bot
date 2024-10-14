@@ -46,6 +46,14 @@ async def start_bot(request: BotRequest):
         )
         active_bots[request.room_url] = process
         logger.info(f"Started bot for room: {request.room_url}")
+
+        # Read and log the output
+        stdout, stderr = await process.communicate()
+        if stdout:
+            logger.info(f"[stdout] {stdout.decode()}")
+        if stderr:
+            logger.error(f"[stderr] {stderr.decode()}")
+
         return {"status": "started", "room_url": request.room_url}
     except Exception as e:
         logger.error(f"Failed to start bot: {str(e)}")

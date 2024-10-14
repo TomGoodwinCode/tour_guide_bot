@@ -38,6 +38,14 @@ class Configuration:
         },
     )
 
+    thread_id: int = field(
+        default=0,
+        metadata={
+            "description": "The ID of the thread to use for the agent's interactions. "
+            "This ID is used to identify the thread in the database."
+        },
+    )
+
     @classmethod
     def from_runnable_config(
         cls, config: Optional[RunnableConfig] = None

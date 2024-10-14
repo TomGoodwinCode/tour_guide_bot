@@ -71,9 +71,9 @@ class LanggraphProcessor(FrameProcessor):
         await self.push_frame(LLMFullResponseStartFrame())
         try:
             async for event in self._graph.astream_events(
-                {"messages": [HumanMessage(content=text)]},
+                {"input": [HumanMessage(content=text)]},
                 config={"configurable": {"thread_id": self._participant_id}},
-                version="v1",
+                version="v2",
             ):
                 match event["event"]:
                     case "on_chat_model_stream":
