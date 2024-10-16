@@ -135,7 +135,7 @@ workflow.add_conditional_edges(
 # This creates a cycle: after using tools, we always return to the model
 workflow.add_edge("tools", "call_model")
 
-# memory = MemorySaver()
+memory = MemorySaver()
 
 # Compile the workflow into an executable graph
 # You can customize this by adding interrupt points for state updates
@@ -143,6 +143,6 @@ graph = workflow.compile(
     interrupt_before=[],  # Add node names here to update state before they're called
     interrupt_after=[],  # Add node names here to update state after they're called
     debug=True,
-    # checkpointer=memory,
+    checkpointer=memory,
 )
 graph.name = "Pipecat Bot 2"  # This customizes the name in LangSmith
