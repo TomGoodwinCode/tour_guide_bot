@@ -38,6 +38,8 @@ class BotSettings(BaseSettings):
     langchain_project: Optional[str] = None
     langchain_tracing_v2: Optional[str] = None
 
+    tavily_api_key: Optional[str] = None
+
     # Add any other bot-specific settings as needed
     PYTHONPATH: str = "/Users/tom/repositories/tour-guide/backend/shared_library"
 

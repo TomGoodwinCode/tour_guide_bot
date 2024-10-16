@@ -53,13 +53,13 @@ class DetailedFrameLogger(FrameProcessor):
         self.name = name
 
     async def process_frame(self, frame: Frame, direction: FrameDirection):
-        # logger.debug(f"{self.name}: Received frame type {type(frame).__name__}")
-        # if isinstance(frame, AudioRawFrame):
-        #     logger.debug(
-        #         f"{self.name}: Audio frame received, length: {len(frame.audio)}"
-        #     )
-        # elif hasattr(frame, "text"):
-        #     logger.debug(f"{self.name}: Frame content: {frame.text}")
+        logger.debug(f"{self.name}: Received frame type {type(frame).__name__}")
+        if isinstance(frame, AudioRawFrame):
+            logger.debug(
+                f"{self.name}: Audio frame received, length: {len(frame.audio)}"
+            )
+        elif hasattr(frame, "text"):
+            logger.debug(f"{self.name}: Frame content: {frame.text}")
         await self.push_frame(frame, direction)
 
 

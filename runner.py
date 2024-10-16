@@ -20,6 +20,14 @@ class BotRequest(BaseModel):
 active_bots: Dict[str, asyncio.subprocess.Process] = {}
 
 
+async def log_stream(stream, logger_func):
+    while True:
+        line = await stream.readline()
+        if not line:
+            break
+        logger_func(line.decode().strip())
+
+
 @app.post("/start_bot")
 async def start_bot(request: BotRequest):
     if request.room_url in active_bots:
@@ -47,13 +55,14 @@ async def start_bot(request: BotRequest):
         active_bots[request.room_url] = process
         logger.info(f"Started bot for room: {request.room_url}")
 
-        # Read and log the output
-        stdout, stderr = await process.communicate()
-        if stdout:
-            logger.info(f"[stdout] {stdout.decode()}")
-        if stderr:
-            logger.error(f"[stderr] {stderr.decode()}")
+        # Create tasks to log stdout and stderr
+        stdout_task = asyncio.create_task(log_stream(process.stdout, logger.info))
+        stderr_task = asyncio.create_task(log_stream(process.stderr, logger.error))
 
+        # Create a task to wait for the process to complete
+        wait_task = asyncio.create_task(process.wait())
+
+        # Return immediately, allowing the bot to run in the background
         return {"status": "started", "room_url": request.room_url}
     except Exception as e:
         logger.error(f"Failed to start bot: {str(e)}")

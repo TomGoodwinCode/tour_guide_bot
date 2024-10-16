@@ -71,7 +71,7 @@ class LanggraphProcessor(FrameProcessor):
         await self.push_frame(LLMFullResponseStartFrame())
         try:
             async for event in self._graph.astream_events(
-                {"input": [HumanMessage(content=text)]},
+                {"messages": [HumanMessage(content=text)]},
                 config={"configurable": {"thread_id": self._participant_id}},
                 version="v2",
             ):

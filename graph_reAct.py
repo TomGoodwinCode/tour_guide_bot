@@ -5,7 +5,7 @@ Works with a chat model with tool calling support.
 
 from datetime import datetime, timezone
 import logging
-from typing import Dict, List, Literal, TypedDict, cast
+from typing import Dict, List, Literal, cast
 
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import ChatPromptTemplate
@@ -13,7 +13,6 @@ from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
-from pydantic import BaseModel
 
 from configuration import Configuration
 from state import InputState, State
@@ -21,10 +20,10 @@ from tools import TOOLS
 
 from utils import load_chat_model
 
-from langgraph.checkpoint.memory import MemorySaver
-
 
 # Define the function that calls the model
+
+
 async def call_model(
     state: State, config: RunnableConfig
 ) -> Dict[str, List[AIMessage]]:
@@ -39,9 +38,9 @@ async def call_model(
 
     Returns:
         dict: A dictionary containing the model's response message.
-
     """
 
+    print("hi")
     configuration = Configuration.from_runnable_config(config)
 
     # Create a prompt template. Customize this to change the agent's behavior.
@@ -53,20 +52,14 @@ async def call_model(
     model = load_chat_model(configuration.model).bind_tools(TOOLS)
     # model = ChatOpenAI(model="gpt-4o",temperature=0)
     # Prepare the input for the model, including the current system time
-    # messages are all but last message
-    # input is last message
     message_value = await prompt.ainvoke(
         {
             "messages": state.messages,
-            "title": "London",
-            "wiki_title": "London",
-            "wiki_extract": "London is the capital city of England.",
-            "wiki_description": "London is the capital city of England.",
+            "system_time": datetime.now(tz=timezone.utc).isoformat(),
         },
         config,
     )
 
-    logging.info(f"message_value: {message_value}")
     # Get the model's response
     response = cast(AIMessage, await model.ainvoke(message_value, config))
 
@@ -135,14 +128,11 @@ workflow.add_conditional_edges(
 # This creates a cycle: after using tools, we always return to the model
 workflow.add_edge("tools", "call_model")
 
-# memory = MemorySaver()
-
 # Compile the workflow into an executable graph
 # You can customize this by adding interrupt points for state updates
 graph = workflow.compile(
     interrupt_before=[],  # Add node names here to update state before they're called
     interrupt_after=[],  # Add node names here to update state after they're called
-    debug=True,
-    # checkpointer=memory,
+    debug=True,  # Don't know what this does
 )
-graph.name = "Pipecat Bot 2"  # This customizes the name in LangSmith
+graph.name = "ReAct Agent"  # This customizes the name in LangSmith

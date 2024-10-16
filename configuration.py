@@ -8,7 +8,7 @@ from typing import Annotated, Optional
 from langchain_core.runnables import RunnableConfig, ensure_config
 
 
-import prompts
+import prompts as prompts
 
 
 @dataclass(kw_only=True)
@@ -35,14 +35,6 @@ class Configuration:
         default=10,
         metadata={
             "description": "The maximum number of search results to return for each search query."
-        },
-    )
-
-    thread_id: int = field(
-        default=0,
-        metadata={
-            "description": "The ID of the thread to use for the agent's interactions. "
-            "This ID is used to identify the thread in the database."
         },
     )
 
