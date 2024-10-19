@@ -40,6 +40,10 @@ class BotSettings(BaseSettings):
 
     tavily_api_key: Optional[str] = None
 
+    fly_api_host: Optional[str] = None
+    fly_api_key: Optional[str] = None
+    fly_app_name: Optional[str] = None
+
     # Add any other bot-specific settings as needed
     PYTHONPATH: str = "/Users/tom/repositories/tour-guide/backend/shared_library"
 

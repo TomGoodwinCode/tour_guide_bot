@@ -30,6 +30,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 from di.container_instance import bot_container
 
+7
 
 from loguru import logger
 
