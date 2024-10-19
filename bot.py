@@ -8,6 +8,7 @@ from pipecat.frames.frames import (
     LLMMessagesFrame,
     Frame,
     AudioRawFrame,
+    EndFrame,
 )
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
@@ -134,7 +135,7 @@ async def main(
     @transport.event_handler("on_participant_left")
     async def on_participant_left(transport, participant, reason):
         lc.set_participant_id(None)
-        # Implement graceful shutdown here
+        await pipeline_task.queue_frames([EndFrame()])
 
     try:
         await runner.run(pipeline_task)
