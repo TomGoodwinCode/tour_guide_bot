@@ -1,5 +1,7 @@
 import argparse
 import asyncio
+import os
+import sys
 from typing import Any, Dict, List, NewType, Optional
 
 from pipecat.transports.services.daily import DailyTransport, DailyParams
@@ -36,6 +38,9 @@ from graph import graph
 from langgraph_processor import LanggraphProcessor
 from models.schemas import UserID
 
+logger.remove(0)
+logger.add(sys.stderr, level="DEBUG")
+
 ItemID = NewType("ItemID", str)
 
 
@@ -67,15 +72,13 @@ class DetailedFrameLogger(FrameProcessor):
 async def main(
     room_url: str,
     bot_token: str,
-    cartesia_api_key: str,
     item_id: ItemID,
-    supabase_url: str,
-    supabase_key: str,
 ):
     user_id = UserID(
         "7e47340c-f3cd-5da4-8aa7-d7675cb036f5"
     )  # TODO: Replace with actual user authentication
     redis_cache = bot_container.redis_cache()
+    bot_settings = bot_container.config()
 
     # Fetch POI data with WikiData
     poi_data = redis_cache.get_item_from_item_store(user_id, item_id)
@@ -89,6 +92,8 @@ async def main(
         token=bot_token,
         bot_name="Tour Guide Bot 2",
         params=DailyParams(
+            api_url=bot_settings.daily_api_url,
+            api_key=bot_settings.daily_api_key,
             audio_out_enabled=True,
             transcription_enabled=True,
             vad_enabled=True,
@@ -98,7 +103,7 @@ async def main(
 
     stt = WhisperSTTService()
     tts = CartesiaTTSService(
-        api_key=cartesia_api_key,
+        api_key=bot_settings.cartesia_api_key,
         voice_id="f114a467-c40a-4db8-964d-aaba89cd08fa",  # Yoga Man
         # "a0e99841-438c-4a64-b679-ae501e7d6091",  # Barbershop Man
     )
@@ -148,19 +153,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tour Guide Bot")
     parser.add_argument("--room_url", required=True, help="Daily room URL")
     parser.add_argument("--bot_token", required=True, help="Bot token for Daily room")
-    parser.add_argument("--cartesia_api_key", required=True, help="Cartesia API key")
     parser.add_argument("--item_id", required=True, help="Point of Interest ItemID")
-    parser.add_argument("--supabase_url", required=True, help="Supabase URL")
-    parser.add_argument("--supabase_key", required=True, help="Supabase API key")
     args = parser.parse_args()
 
     asyncio.run(
         main(
             args.room_url,
             args.bot_token,
-            args.cartesia_api_key,
             ItemID(args.item_id),  # Convert to ItemID
-            args.supabase_url,
-            args.supabase_key,
         )
     )

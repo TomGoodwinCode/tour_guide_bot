@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 import asyncio
 import sys
 from typing import Dict
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from loguru import logger
 
@@ -29,7 +30,7 @@ async def log_stream(stream, logger_func):
 
 
 @app.post("/start_bot")
-async def start_bot(request: BotRequest):
+async def start_bot(request: BotRequest) -> JSONResponse:
     if request.room_url in active_bots:
         raise HTTPException(status_code=400, detail="Bot already running for this room")
 
@@ -43,12 +44,6 @@ async def start_bot(request: BotRequest):
             request.bot_token,
             "--item_id",
             request.item_id,
-            "--cartesia_api_key",
-            request.cartesia_api_key,
-            "--supabase_url",
-            request.supabase_url,
-            "--supabase_key",
-            request.supabase_key,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -63,7 +58,7 @@ async def start_bot(request: BotRequest):
         wait_task = asyncio.create_task(process.wait())
 
         # Return immediately, allowing the bot to run in the background
-        return {"status": "started", "room_url": request.room_url}
+        return JSONResponse({"status": "started", "room_url": request.room_url})
     except Exception as e:
         logger.error(f"Failed to start bot: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to start bot: {str(e)}")
