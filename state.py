@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Sequence
 
-from langchain_core.messages import AnyMessage
+from langchain_core.messages import AnyMessage, AIMessage
 from langgraph.graph import add_messages
 from langgraph.managed import IsLastStep
 from typing_extensions import Annotated
@@ -46,6 +46,8 @@ class State(InputState):
     """
 
     is_last_step: IsLastStep = field(default=False)
+
+    # summary: Annotated[Sequence[AIMessage], add_messages] = field(default_factory=list)
     """
     Indicates whether the current step is the last one before the graph raises an error.
 

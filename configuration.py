@@ -23,6 +23,10 @@ class Configuration:
         },
     )
 
+    summarize_tour_prompt: str = field(
+        default=prompts.SUMMARIZE_TOUR_PROMPT,
+    )
+
     model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = field(
         default="openai/gpt-4o-mini",
         metadata={
@@ -44,6 +48,14 @@ class Configuration:
 
     item_id: str = field(
         default="",
+    )
+
+    guide_role: str = field(
+        default="normal",
+    )
+
+    tour_length: int = field(
+        default=2,
     )
 
     @classmethod

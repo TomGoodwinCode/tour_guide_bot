@@ -37,6 +37,7 @@ from loguru import logger
 from graph import graph
 from langgraph_processor import LanggraphProcessor
 from models.schemas import UserID
+import prompts
 
 logger.remove(0)
 logger.add(sys.stderr, level="DEBUG")
@@ -55,20 +56,9 @@ class Guide(BaseModel):
 
 guides = [
     Guide(
-        role="expert",
+        role="normal",
         voice_id="f114a467-c40a-4db8-964d-aaba89cd08fa",
         voice_name="Yogaman",
-        model_id="sonic-english",
-        language="en",
-        experimental_controls=ExperimentalControls(
-            speed="fast",
-            emotion=[],
-        ),
-    ),
-    Guide(
-        role="normal",  # (kids)
-        voice_id="573e3144-a684-4e72-ac2b-9b2063a50b53",
-        voice_name="Teacher Lady",
         model_id="sonic-english",
         language="en",
         experimental_controls=ExperimentalControls(
@@ -77,7 +67,18 @@ guides = [
         ),
     ),
     Guide(
-        role="basic",  # (adults)
+        role="expert",  # (adults)
+        voice_id="573e3144-a684-4e72-ac2b-9b2063a50b53",
+        voice_name="Teacher Lady",
+        model_id="sonic-english",
+        language="en",
+        experimental_controls=ExperimentalControls(
+            speed="fast",
+            emotion=[],
+        ),
+    ),
+    Guide(
+        role="basic",  # (kids)
         voice_id="79a125e8-cd45-4c13-8a67-188112f4dd22",
         voice_name="British Lady",
         model_id="sonic-english",
@@ -165,6 +166,8 @@ async def main(
         graph=graph,
         config={
             "configurable": {
+                "guide_role": guide_role,
+                "tour_length": tour_length,
                 "thread_id": f"{user_id}-{transport.participant_id}",
                 "user_id": user_id,
                 "item_id": item_id,
@@ -211,7 +214,7 @@ async def main(
     async def on_first_participant_joined(transport, participant):
         transport.capture_participant_transcription(participant["id"])
         lc.set_participant_id(participant["id"])
-        messages = [{"content": "Please briefly introduce yourself to the user."}]
+        messages = [{"content": "Begin your tour in it's entirety."}]
         await pipeline_task.queue_frames([LLMMessagesFrame(messages)])
 
     @transport.event_handler("on_participant_left")

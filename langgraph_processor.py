@@ -83,6 +83,9 @@ class LanggraphProcessor(FrameProcessor):
                             TextFrame(self.__get_token_value(event["data"]["chunk"]))
                         )
                         # await self.push_frame(LLMResponseEndFrame()) !I think these has been deprecated and is no longer needed
+                    case "summary_event":
+                        logger.info(f"Received summary event: {event}")
+                        print(f"Received event: {event['data']['chunk']}")
                     case "on_tool_start":
                         logger.debug(
                             f"Starting tool: {event['name']} with inputs: {event['data'].get('input')}"
