@@ -13,9 +13,8 @@ class BotRequest(BaseModel):
     room_url: str
     bot_token: str
     item_id: str
-    cartesia_api_key: str
-    supabase_url: str
-    supabase_key: str
+    guide_role: str
+    tour_length: int  # tour_length in minuites
 
 
 active_bots: Dict[str, asyncio.subprocess.Process] = {}
@@ -33,7 +32,7 @@ async def log_stream(stream, logger_func):
 async def start_bot(request: BotRequest) -> JSONResponse:
     if request.room_url in active_bots:
         raise HTTPException(status_code=400, detail="Bot already running for this room")
-    guide_role = "regular"
+
     try:
         process = await asyncio.create_subprocess_exec(
             sys.executable,
@@ -45,7 +44,9 @@ async def start_bot(request: BotRequest) -> JSONResponse:
             "--item_id",
             request.item_id,
             "--guide_role",
-            guide_role,
+            request.guide_role,
+            "--tour_length",
+            str(request.tour_length),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )

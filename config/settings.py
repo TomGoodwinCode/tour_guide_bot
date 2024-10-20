@@ -47,6 +47,8 @@ class BotSettings(BaseSettings):
     # Add any other bot-specific settings as needed
     PYTHONPATH: str = "/Users/tom/repositories/tour-guide/backend/shared_library"
 
+    cerebras_api_key: Optional[str] = None
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

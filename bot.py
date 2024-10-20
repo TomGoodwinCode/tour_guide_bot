@@ -11,6 +11,8 @@ from pipecat.frames.frames import (
     Frame,
     AudioRawFrame,
     EndFrame,
+    TextFrame,
+    TransportMessageFrame,
 )
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
@@ -64,7 +66,7 @@ guides = [
         ),
     ),
     Guide(
-        role="regular",  # (kids)
+        role="normal",  # (kids)
         voice_id="573e3144-a684-4e72-ac2b-9b2063a50b53",
         voice_name="Teacher Lady",
         model_id="sonic-english",
@@ -125,6 +127,7 @@ async def main(
     bot_token: str,
     item_id: ItemID,
     guide_role: str,
+    tour_length: int,  # TODO: implement length
 ):
     guide = find_guide_by_role(guide_role, guides)
 
@@ -162,12 +165,26 @@ async def main(
         graph=graph,
         config={
             "configurable": {
-                "thread_id": f"{user_id}-{item_id}",
+                "thread_id": f"{user_id}-{transport.participant_id}",
                 "user_id": user_id,
                 "item_id": item_id,
             }
         },
     )
+
+    class BroadcastService(FrameProcessor):
+        def __init__(self, transport: DailyTransport):
+            super().__init__()
+            self.transport = transport
+
+        async def process_frame(self, frame: Frame, direction: FrameDirection) -> Frame:
+            if isinstance(frame, TextFrame):
+                message = "Broadcasting based on a specific event!"
+                await self.transport.output().send_message(
+                    TransportMessageFrame(message=message)
+                )
+            await self.push_frame(frame, direction)
+            return frame
 
     user_response = LLMUserResponseAggregator()
     assistant_response = LLMAssistantResponseAggregator()
@@ -179,6 +196,7 @@ async def main(
             stt,
             user_response,
             lc,
+            BroadcastService(transport),
             logger,
             tts,
             transport.output(),
@@ -214,6 +232,7 @@ if __name__ == "__main__":
     parser.add_argument("--bot_token", required=True, help="Bot token for Daily room")
     parser.add_argument("--item_id", required=True, help="Point of Interest ItemID")
     parser.add_argument("--guide_role", required=True, help="Guide role")
+    parser.add_argument("--tour_length", required=True, help="Tour length in minutes")
     args = parser.parse_args()
 
     asyncio.run(
@@ -222,5 +241,6 @@ if __name__ == "__main__":
             args.bot_token,
             ItemID(args.item_id),  # Convert to ItemID
             args.guide_role,
+            args.tour_length,
         )
     )

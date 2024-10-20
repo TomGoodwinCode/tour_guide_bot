@@ -20,6 +20,7 @@ from state import InputState, State
 from tools import TOOLS
 from di.container_instance import bot_container
 from utils import load_chat_model
+from langchain_cerebras import ChatCerebras
 
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -59,9 +60,10 @@ async def call_model(
         [("system", configuration.system_prompt), ("placeholder", "{messages}")]
     )
 
+    model = ChatCerebras(model="llama3.1-70b", temperature=0).bind_tools(TOOLS)
     # Initialize the model with tool binding. Change the model or add more tools here.
-    model = load_chat_model(configuration.model).bind_tools(TOOLS)
-    # model = ChatOpenAI(model="gpt-4o",temperature=0)
+    # model = load_chat_model(configuration.model)
+    # model = ChatOpenAI(model="gpt-4o", temperature=0)
     # Prepare the input for the model, including the current system time
     # messages are all but last message
     # input is last message
