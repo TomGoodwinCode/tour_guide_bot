@@ -18,7 +18,7 @@ from pydantic import BaseModel
 from configuration import Configuration
 from state import InputState, State
 from tools import TOOLS
-
+from di.container_instance import bot_container
 from utils import load_chat_model
 
 from langgraph.checkpoint.memory import MemorySaver
@@ -42,7 +42,17 @@ async def call_model(
 
     """
 
+    redis_cache = bot_container.redis_cache()
+
+    # get the item of interest from redis
+
     configuration = Configuration.from_runnable_config(config)
+    # Fetch POI data with WikiData
+    poi_data = redis_cache.get_item_from_item_store(
+        configuration.user_id, configuration.item_id
+    )
+    if not poi_data:
+        raise ValueError(f"Item with item_id {configuration.item_id} not found")
 
     # Create a prompt template. Customize this to change the agent's behavior.
     prompt = ChatPromptTemplate.from_messages(
@@ -58,10 +68,10 @@ async def call_model(
     message_value = await prompt.ainvoke(
         {
             "messages": state.messages,
-            "title": "London",
-            "wiki_title": "London",
-            "wiki_extract": "London is the capital city of England.",
-            "wiki_description": "London is the capital city of England.",
+            "title": poi_data.title,
+            "wiki_title": poi_data.wiki_data.title,
+            "wiki_extract": poi_data.wiki_data.extract,
+            "wiki_description": poi_data.wiki_data.description,
         },
         config,
     )

@@ -16,7 +16,7 @@ from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.vad.silero import SileroVADAnalyzer
 from pipecat.services.whisper import WhisperSTTService
-from pipecat.services.cartesia import CartesiaTTSService
+from pipecat.services.cartesia import CartesiaTTSService, ExperimentalControls
 from pipecat.processors.aggregators.llm_response import (
     LLMAssistantResponseAggregator,
     LLMUserResponseAggregator,
@@ -30,10 +30,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 from di.container_instance import bot_container
 
-7
-
 from loguru import logger
-
 
 from graph import graph
 from langgraph_processor import LanggraphProcessor
@@ -45,6 +42,52 @@ logger.add(sys.stderr, level="DEBUG")
 ItemID = NewType("ItemID", str)
 
 
+class Guide(BaseModel):
+    role: str
+    voice_id: str
+    voice_name: str
+    model_id: str
+    language: str
+    experimental_controls: ExperimentalControls
+
+
+guides = [
+    Guide(
+        role="expert",
+        voice_id="f114a467-c40a-4db8-964d-aaba89cd08fa",
+        voice_name="Yogaman",
+        model_id="sonic-english",
+        language="en",
+        experimental_controls=ExperimentalControls(
+            speed="fast",
+            emotion=[],
+        ),
+    ),
+    Guide(
+        role="regular",  # (kids)
+        voice_id="573e3144-a684-4e72-ac2b-9b2063a50b53",
+        voice_name="Teacher Lady",
+        model_id="sonic-english",
+        language="en",
+        experimental_controls=ExperimentalControls(
+            speed="normal",
+            emotion=[],
+        ),
+    ),
+    Guide(
+        role="basic",  # (adults)
+        voice_id="79a125e8-cd45-4c13-8a67-188112f4dd22",
+        voice_name="British Lady",
+        model_id="sonic-english",
+        language="en",
+        experimental_controls=ExperimentalControls(
+            speed="normal",
+            emotion=[],
+        ),
+    ),
+]
+
+
 class WikiData(BaseModel):
     title: str
     contentType: str
@@ -52,6 +95,13 @@ class WikiData(BaseModel):
     extract: str  # Short extract from Wikipedia
     description: str  # Full description from Wikipedia
     photo_urls: List[str]
+
+
+def find_guide_by_role(role: str, guides: list[Guide]) -> Guide | None:
+    for guide in guides:
+        if guide.role == role:
+            return guide
+    return None
 
 
 # Import other necessary Pipecat components
@@ -74,17 +124,14 @@ async def main(
     room_url: str,
     bot_token: str,
     item_id: ItemID,
+    guide_role: str,
 ):
+    guide = find_guide_by_role(guide_role, guides)
+
     user_id = UserID(
         "7e47340c-f3cd-5da4-8aa7-d7675cb036f5"
     )  # TODO: Replace with actual user authentication
-    redis_cache = bot_container.redis_cache()
     bot_settings = bot_container.config()
-
-    # Fetch POI data with WikiData
-    poi_data = redis_cache.get_item_from_item_store(user_id, item_id)
-    if not poi_data:
-        raise ValueError(f"Item with item_id {item_id} not found")
 
     graph.get_state
 
@@ -105,11 +152,22 @@ async def main(
     stt = WhisperSTTService()
     tts = CartesiaTTSService(
         api_key=bot_settings.cartesia_api_key,
-        voice_id="f114a467-c40a-4db8-964d-aaba89cd08fa",  # Yoga Man
-        # "a0e99841-438c-4a64-b679-ae501e7d6091",  # Barbershop Man
+        voice_id=guide.voice_id,
+        model_id=guide.model_id,
+        language=guide.language,
+        experimental_controls=guide.experimental_controls.model_dump(),
     )
 
-    lc = LanggraphProcessor(graph=graph)
+    lc = LanggraphProcessor(
+        graph=graph,
+        config={
+            "configurable": {
+                "thread_id": f"{user_id}-{item_id}",
+                "user_id": user_id,
+                "item_id": item_id,
+            }
+        },
+    )
 
     user_response = LLMUserResponseAggregator()
     assistant_response = LLMAssistantResponseAggregator()
@@ -155,6 +213,7 @@ if __name__ == "__main__":
     parser.add_argument("--room_url", required=True, help="Daily room URL")
     parser.add_argument("--bot_token", required=True, help="Bot token for Daily room")
     parser.add_argument("--item_id", required=True, help="Point of Interest ItemID")
+    parser.add_argument("--guide_role", required=True, help="Guide role")
     args = parser.parse_args()
 
     asyncio.run(
@@ -162,5 +221,6 @@ if __name__ == "__main__":
             args.room_url,
             args.bot_token,
             ItemID(args.item_id),  # Convert to ItemID
+            args.guide_role,
         )
     )

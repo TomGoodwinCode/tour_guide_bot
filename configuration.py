@@ -38,6 +38,14 @@ class Configuration:
         },
     )
 
+    user_id: str = field(
+        default="",
+    )
+
+    item_id: str = field(
+        default="",
+    )
+
     @classmethod
     def from_runnable_config(
         cls, config: Optional[RunnableConfig] = None

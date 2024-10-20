@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from langchain.schema import Document
 from langchain_core.messages import HumanMessage
@@ -37,10 +37,10 @@ class ToolResultMessage(DataFrame):
 
 
 class LanggraphProcessor(FrameProcessor):
-    def __init__(self, graph: CompiledStateGraph):
+    def __init__(self, graph: CompiledStateGraph, config: Optional[dict] = None):
         super().__init__()
         self._graph: CompiledStateGraph = graph
-        self._participant_id: str | None = None
+        self._config: dict = config or {}
 
     def set_participant_id(self, participant_id: str):
         self._participant_id = participant_id
@@ -72,7 +72,7 @@ class LanggraphProcessor(FrameProcessor):
         try:
             async for event in self._graph.astream_events(
                 {"messages": [HumanMessage(content=text)]},
-                config={"configurable": {"thread_id": self._participant_id}},
+                config=self._config,
                 version="v2",
             ):
                 match event["event"]:

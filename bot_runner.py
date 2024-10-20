@@ -33,7 +33,7 @@ async def log_stream(stream, logger_func):
 async def start_bot(request: BotRequest) -> JSONResponse:
     if request.room_url in active_bots:
         raise HTTPException(status_code=400, detail="Bot already running for this room")
-
+    guide_role = "regular"
     try:
         process = await asyncio.create_subprocess_exec(
             sys.executable,
@@ -44,6 +44,8 @@ async def start_bot(request: BotRequest) -> JSONResponse:
             request.bot_token,
             "--item_id",
             request.item_id,
+            "--guide_role",
+            guide_role,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
